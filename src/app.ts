@@ -1,3 +1,41 @@
+// Project State Management
+class ProjectState {
+    private projects: any[] = [];
+    private listeners: any[] = [];
+    private static instance: ProjectState;
+
+    private constructor() {
+
+    }
+
+    static getInstance() {
+        if (this.instance) {
+            return this.instance;
+        }
+        this.instance = new ProjectState;
+
+        return this.instance;
+    }
+
+    addListenerFn(listenerFn: Function) {
+        this.listeners.push(listenerFn);
+    }
+
+    addProject(title: string, description: string, numOfPeople: number) {
+        this.projects.push({
+            id: Math.random().toString(),
+            title: title,
+            description: description,
+            people: numOfPeople
+        });
+
+        for (const listenerFn of this.listeners) {
+            listenerFn(this.projects.slice());
+        }
+    }
+}
+
+const projectState = ProjectState.getInstance();
 // Validation
 interface Validatable {
     value: string | number;
@@ -92,7 +130,7 @@ class ProjectInput {
 
         if (Array.isArray(userInput)) {
             const [title, desc, people] = userInput;
-            console.log(title, desc, people);
+            projectState.addProject(title, desc, people);
         }
 
         this.clearInputs();
@@ -139,6 +177,7 @@ class ProjectList {
     templateEl: HTMLTemplateElement;
     hostEl: HTMLDivElement;
     projectEl: HTMLElement;
+    assignedProjects: any[] = [];
 
     constructor(private type: 'active' | 'finished') {
         this.init();
@@ -158,6 +197,11 @@ class ProjectList {
         this.projectEl.id = `${this.type}-projects`;
         this.hostEl.insertAdjacentElement('afterend', this.projectEl);
 
+        projectState.addListenerFn((projects: any[]) => {
+            this.assignedProjects = projects
+            this.renderProjects();
+        });
+
         this.loadEventListeners();
         this.renderContent();
     }
@@ -170,6 +214,16 @@ class ProjectList {
         const listId = `${this.type}-projects-list`;
         this.projectEl.querySelector('ul')!.id = listId;
         this.projectEl.querySelector('h2')!.textContent = `${this.type.toUpperCase()} PROJECTS`; 
+    }
+
+    private renderProjects() {
+        const listEl = document.getElementById(`${this.type}-projects-list`)!;
+
+        for (const prjItem of this.assignedProjects) {
+            const listItem = document.createElement('li');
+            listItem.textContent = prjItem.title;
+            listEl.appendChild(listItem);
+        }
     }
 }
 
