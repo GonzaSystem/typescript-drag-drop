@@ -1,4 +1,4 @@
-import { Validatable } from '../models/validation.js';
+import { Validatable } from '../models/validation';
 
 export function validate(input: Validatable[]): boolean {
     for (const prop of input) {
